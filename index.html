@@ -1,163 +1,118 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
-<meta charset="utf-8"/>
-
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-
-<title>Instagram Downloader - Download Reels, Photos & Videos</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instagram Downloader</title>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
-
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"/>
 
 <style>
-
-*{margin:0;padding:0;box-sizing:border-box}
-
-body{font-family:'Segoe UI',sans-serif;background:#000;color:#f1fdf1;min-height:100vh}
-
-nav{position:fixed;width:100%;top:0;background:#000;border-bottom:1px solid #222}
-
-.nav-container{display:flex;justify-content:center;align-items:center;height:60px}
-
-.logo{display:flex;align-items:center;gap:10px}
-
-.logo span{color:#98ff98;font-weight:bold;font-size:20px}
-
-.main-content{max-width:800px;margin:80px auto;padding:20px;text-align:center}
-
-.card{background:#111;padding:20px;border-radius:10px;margin-bottom:20px}
-
-input{width:100%;padding:12px;background:#000;border:1px solid #333;color:#fff;border-radius:8px}
-
+body{background:#000;color:#fff;font-family:sans-serif;margin:0}
+.main{max-width:800px;margin:80px auto;padding:20px;text-align:center}
+input{width:100%;padding:12px;background:#111;border:1px solid #333;color:#fff;border-radius:8px}
 button{margin-top:10px;width:100%;padding:12px;background:#98ff98;border:none;color:#000;font-weight:bold;border-radius:8px;cursor:pointer}
-
-.result-area{display:none;margin-top:20px}
-
+.card{background:#111;padding:15px;border-radius:10px;margin-top:15px;text-align:left}
+small{color:#aaa}
+img,video{width:100%;border-radius:8px;margin-top:10px}
 </style>
-
 </head>
 
 <body>
 
-<nav>
-
-<div class="nav-container">
-
-<div class="logo">
-
-<span>AhmedSnde</span>
-
-</div>
-
-</div>
-
-</nav>
-
-<main>
-
-<div class="main-content">
+<div class="main">
 
 <h2>Instagram Downloader</h2>
 
-<p>Download Instagram reels, photos & videos in HD quality</p>
+<input id="url" placeholder="Paste Instagram URL">
+<button onclick="getData()">Download</button>
 
-<div class="card">
+<div id="status" style="margin-top:10px;color:#98ff98;"></div>
 
-<input id="igUrl" placeholder="Paste Instagram URL">
-
-<button id="fetchBtn">Download</button>
-
-</div>
-
-<div id="resultArea" class="result-area">
-
-<div id="downloadGrid"></div>
+<div id="result"></div>
 
 </div>
-
-</div>
-
-</main>
-
-<footer style="text-align:center;padding:20px;color:#aaa;">
-
-© <span id="year"></span> AhmedSnde
-
-</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-
-document.getElementById("year").textContent=new Date().getFullYear();
-
-const igUrl=document.getElementById("igUrl");
-
-const fetchBtn=document.getElementById("fetchBtn");
-
-const resultArea=document.getElementById("resultArea");
-
-const downloadGrid=document.getElementById("downloadGrid");
-
-fetchBtn.onclick=async ()=>{
-
-let url=igUrl.value.trim();
+async function getData(){
+let url=document.getElementById("url").value;
+let status=document.getElementById("status");
+let result=document.getElementById("result");
 
 if(!url){
-
 Swal.fire("Error","Paste URL","error");
-
 return;
-
 }
 
+status.innerText="Waiting for download...";
+result.innerHTML="";
+
 try{
-
 let api="https://host.optikl.ink/download/instagram?url="+encodeURIComponent(url);
-
 let res=await fetch(api);
-
 let data=await res.json();
 
 if(data.ok){
 
-downloadGrid.innerHTML="";
+let d=data.detail;
+
+let html=`
+<div class="card">
+<b>@${d.username}</b><br>
+<small>❤️ ${d.like_count} | 💬 ${d.comment_count}</small><br><br>
+${d.title || ""}
+</div>
+`;
 
 data.downloadUrls.forEach((item,i)=>{
 
-let btn=document.createElement("button");
-
-btn.innerText="Download "+(i+1);
-
-btn.onclick=()=>window.open(item.url);
-
-downloadGrid.appendChild(btn);
+if(item.ext==="mp4"){
+html+=`
+<div class="card">
+<video controls src="${item.url}"></video>
+<a href="${item.url}" target="_blank">
+<button>Download Video ${i+1}</button>
+</a>
+</div>
+`;
+}else{
+html+=`
+<div class="card">
+<img src="${item.url}">
+<a href="${item.url}" target="_blank">
+<button>Download Image ${i+1}</button>
+</a>
+</div>
+`;
+}
 
 });
 
-resultArea.style.display="block";
+if(d.comments && d.comments.length){
+html+=`<div class="card"><b>Comments:</b><br>`;
+d.comments.slice(0,5).forEach(c=>{
+html+=`<small>@${c.username}: ${c.text}</small><br>`;
+});
+html+=`</div>`;
+}
+
+result.innerHTML=html;
+status.innerText="";
 
 }else{
-
 Swal.fire("Error","Failed","error");
-
+status.innerText="";
 }
 
 }catch(e){
-
 Swal.fire("Error",e.message,"error");
-
+status.innerText="";
 }
-
-};
-
+}
 </script>
 
 </body>
-
 </html>
